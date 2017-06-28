@@ -1,3 +1,4 @@
+#include "unity.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -10,15 +11,24 @@
 #include "aes.h"
 
 static void phex(uint8_t* str);
-static void test_encrypt_ecb(void);
-static void test_decrypt_ecb(void);
-static void test_encrypt_ecb_verbose(void);
-static void test_encrypt_cbc(void);
-static void test_decrypt_cbc(void);
+void test_encrypt_ecb(void);
+void test_decrypt_ecb(void);
+void test_encrypt_ecb_verbose(void);
+void test_encrypt_cbc(void);
+void test_decrypt_cbc(void);
 
+void setUp(void)
+{
+    
+    
+}
 
+void tearDown(void)
+{
+    
+}
 
-int main(void)
+/* int main(void)
 {
     test_encrypt_cbc();
     test_decrypt_cbc();
@@ -27,7 +37,7 @@ int main(void)
     test_encrypt_ecb_verbose();
     
     return 0;
-}
+} */
 
 
 
@@ -40,7 +50,7 @@ static void phex(uint8_t* str)
     printf("\n");
 }
 
-static void test_encrypt_ecb_verbose(void)
+void test_encrypt_ecb_verbose(void)
 {
     // Example of more verbose verification
 
@@ -81,7 +91,7 @@ static void test_encrypt_ecb_verbose(void)
 }
 
 
-static void test_encrypt_ecb(void)
+void test_encrypt_ecb(void)
 {
   uint8_t key[] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
   uint8_t in[]  = {0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a};
@@ -102,7 +112,7 @@ static void test_encrypt_ecb(void)
   }
 }
 
-static void test_decrypt_cbc(void)
+void test_decrypt_cbc(void)
 {
   // Example "simulating" a smaller buffer...
 
@@ -135,7 +145,7 @@ static void test_decrypt_cbc(void)
   }
 }
 
-static void test_encrypt_cbc(void)
+void test_encrypt_cbc(void)
 {
   uint8_t key[] = { 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c };
   uint8_t iv[]  = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
@@ -164,7 +174,7 @@ static void test_encrypt_cbc(void)
 }
 
 
-static void test_decrypt_ecb(void)
+void test_decrypt_ecb(void)
 {
   uint8_t key[] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
   uint8_t in[]  = {0x3a, 0xd7, 0x7b, 0xb4, 0x0d, 0x7a, 0x36, 0x60, 0xa8, 0x9e, 0xca, 0xf3, 0x24, 0x66, 0xef, 0x97};
@@ -185,4 +195,60 @@ static void test_decrypt_ecb(void)
   }
 }
 
+void test_bothEcb(void)
+{                  //  0123456789012345z
+    uint8_t key[] =   "this is bad key ";
+    uint8_t myMes[] = "this is my messa";
+    uint8_t cryp[16];
+    uint8_t plain[16];
+    
+    AES128_ECB_encrypt(myMes, key, cryp);
+    AES128_ECB_decrypt(cryp, key, plain);
+    phex(key);
+    phex(cryp);
+    phex(plain);
+    
+    TEST_ASSERT_EQUAL_UINT8_ARRAY (myMes, plain, 16);
+
+}
+
+// count the number of bits that differ between two buffers
+int difCnt(uint8_t *buf1, uint8_t *buf2, size_t cnt)
+{
+    uint32_t sum = 0;
+    for (int i=0; i<cnt; i++)
+    {
+        uint8_t test = buf1[i] ^ buf2[i];
+        for (int j=0; j<8;j++)
+        {
+            sum += test & 0x1;
+            test >>= 1;
+        }
+    }
+    return sum;
+}
+
+
+void test_EcbCnt(void)
+{
+    uint8_t key[] =   "this is bad key ";
+    uint8_t myMes[] = "this is my mes S"; // where S is a counter (salt)
+    uint8_t cryp[16];
+    uint8_t last[16];
+    uint8_t plain[16];
+    
+    memcpy(last, myMes, 16);
+    for (int i=0; i<10; i++)
+    {
+        int diff;
+        myMes[15] = (uint8_t)i;
+        AES128_ECB_encrypt(myMes, key, cryp);
+        diff = difCnt(cryp, last, 16);
+        memcpy(last, cryp, 16);
+        AES128_ECB_decrypt(cryp, key, plain);
+        printf("%i, ",diff);
+        phex(cryp);
+        TEST_ASSERT_EQUAL_UINT8_ARRAY (myMes, plain, 16);
+    }
+}
 

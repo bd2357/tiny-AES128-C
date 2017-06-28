@@ -1,5 +1,11 @@
 ### Tiny AES128 in C
 
+This is a fork of https://github.com/kokke/tiny-AES128-C.git
+I have not changed it except that I migrated the test code to Ceedling to 
+make it easier for me to experiment with the code.
+
+## Original README
+
 This is a small and portable implementation of the AES128 ECB and CBC encryption algorithms written in C.
 
 The API is very simple and looks like this (I am using C99 `<stdint.h>`-style annotated types):
